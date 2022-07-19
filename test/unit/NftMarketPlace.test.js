@@ -101,10 +101,32 @@ const { devChains } = require("../../helper-hardhat-config")
       })
 
       describe("buyItem", () => {
-        //it("", async () => {})
-        //it("", async () => {})
-        //it("", async () => {})
-        //it("", async () => {})
+        it("prohibits un-listed item", async () => {
+          await expect(
+            nftMarketplace.connect(player).buyItem(basicNft.address, TOKEN_ID,{value:PRICE})
+          ).to.be.revertedWith(`NftMarketplace__NotListed("${basicNft.address}", ${TOKEN_ID})`)
+        })
+        it("prohibits lesser buy price", async () => {
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          const buyPrice = ethers.utils.parseEther('0.09')
+          await expect(
+            nftMarketplace.connect(player).buyItem(basicNft.address, TOKEN_ID,{value:buyPrice})
+          ).to.be.revertedWith(`NftMarketplace__PriceNotMet("${basicNft.address}", ${TOKEN_ID}, ${PRICE})`)
+        })
+        it("successful buy transfers ownership, emits event and update state correctly", async () => {
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          // emits event
+          expect(await nftMarketplace.connect(player).buyItem(basicNft.address, TOKEN_ID,  {value:PRICE})).to.emit(
+            `ItemBought(${player.address}, ${basicNft.address}, ${TOKEN_ID}, ${PRICE})`
+          )
+          // unregistered from marketplace
+          const { price, seller } = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+          expect(price).to.equal(0)
+          // seller get proceeds
+          expect(await nftMarketplace.getProceeds(deployer.address)).to.equal(PRICE)
+          // ownership is transfered
+          expect(await basicNft.ownerOf(TOKEN_ID)).to.equal(player.address)
+        })
       })
 
       describe("withdrawProceeds", () => {
