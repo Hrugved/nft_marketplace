@@ -135,7 +135,7 @@ contract NftMarketplace is ReentrancyGuard {
     emit ItemListed(msg.sender, nftAddress, tokenId, newPrice);
   }
 
-  function withdrawProceeds() external {
+  function withdrawProceeds() external nonReentrant {
     uint256 proceeds = s_proceeds[msg.sender];
     if (proceeds <= 0) {
       revert NftMarketplace__NoProceeds();
