@@ -78,10 +78,26 @@ const { devChains } = require("../../helper-hardhat-config")
       })
 
       describe("cancelListing", () => {
-        //it("", async () => {})
-        //it("", async () => {})
-        //it("", async () => {})
-        //it("", async () => {})
+        it("prohibits un-listed item", async () => {
+          await expect(
+            nftMarketplace.cancelListing(basicNft.address, TOKEN_ID)
+          ).to.be.revertedWith(`NftMarketplace__NotListed("${basicNft.address}", ${TOKEN_ID})`)
+        })
+        it("prohibits non-owners", async () => {
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          await basicNft.approve(player.address, TOKEN_ID)
+          await expect(
+            nftMarketplace.connect(player).cancelListing(basicNft.address, TOKEN_ID)
+          ).to.be.revertedWith("NftMarketplace__NotOwner")
+        })
+        it("succesful cancel emits event and updates state correctly", async () => {
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          expect(await nftMarketplace.cancelListing(basicNft.address, TOKEN_ID)).to.emit(
+            `ItemCancelled(${deployer.address}, ${basicNft.address}, ${TOKEN_ID})`
+          )
+          const { price, seller } = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+          expect(price).to.equal(0)
+        })
       })
 
       describe("buyItem", () => {
