@@ -53,10 +53,28 @@ const { devChains } = require("../../helper-hardhat-config")
       })
 
       describe("updateListing", () => {
-        //it("", async () => {})
-        //it("", async () => {})
-        //it("", async () => {})
-        //it("", async () => {})
+        it("prohibits un-listed item", async () => {
+          await expect(
+            nftMarketplace.updateListing(basicNft.address, TOKEN_ID, PRICE)
+          ).to.be.revertedWith(`NftMarketplace__NotListed("${basicNft.address}", ${TOKEN_ID})`)
+        })
+        it("prohibits non-owners", async () => {
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          await basicNft.approve(player.address, TOKEN_ID)
+          await expect(
+            nftMarketplace.connect(player).updateListing(basicNft.address, TOKEN_ID, PRICE)
+          ).to.be.revertedWith("NftMarketplace__NotOwner")
+        })
+        it("succesful update emits event and updates state correctly", async () => {
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          const newPrice = ethers.utils.parseEther("0.2")
+          expect(await nftMarketplace.updateListing(basicNft.address, TOKEN_ID, newPrice)).to.emit(
+            `ItemListed(${deployer.address}, ${basicNft.address}, ${TOKEN_ID}, ${newPrice})`
+          )
+          const { price, seller } = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+          expect(price).to.equal(newPrice)
+          expect(seller).to.equal(deployer.address)
+        })
       })
 
       describe("cancelListing", () => {
