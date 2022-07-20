@@ -1,4 +1,5 @@
-const { ethers } = require("hardhat")
+const { ethers, network } = require("hardhat")
+const { moveBlocks, sleep } = require("./move-block")
 
 const PRICE = ethers.utils.parseEther('0.1')
 
@@ -15,6 +16,9 @@ mintAndList = async () => {
   console.log("Listing NFT...")
   const tx = await nftMarketplace.listItem(basicNft.address, tokenId, PRICE)
   await tx.wait(1)
+  if(network.config.chainId==31337) {
+    await moveBlocks(1,(sleepAmount=1000))
+  }
 }
 
 mintAndList()
