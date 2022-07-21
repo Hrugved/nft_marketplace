@@ -1,5 +1,5 @@
 const { ethers, network } = require("hardhat")
-const { moveBlocks, sleep } = require("./move-block")
+const { moveBlocks, sleep } = require("../utils/move-block")
 
 const TOKEN_ID = 5
 
